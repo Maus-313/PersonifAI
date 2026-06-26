@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { LoginModal, DemoDialog } from "../Modal";
+import { useAuth } from "../ThemeProvider";
+import { useRouter } from "next/navigation";
 
 export default function Hero() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isDemoDialogOpen, setIsDemoDialogOpen] = useState(false);
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
 
   return (
     <>
@@ -27,12 +31,21 @@ export default function Hero() {
               Perfect for school students and college learners seeking academic excellence.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button 
-                onClick={() => setIsLoginModalOpen(true)}
-                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1"
-              >
-                Start Learning Free
-              </button>
+              {isLoggedIn ? (
+                <button 
+                  onClick={() => router.push("/dashboard")}
+                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1"
+                >
+                  Start Learning Free
+                </button>
+              )}
               <button 
                 onClick={() => setIsDemoDialogOpen(true)}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-8 py-4 rounded-full font-semibold text-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all"

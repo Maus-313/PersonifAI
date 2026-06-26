@@ -20,14 +20,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    // Get theme from localStorage or system preference
+    // Get theme from localStorage
     const storedTheme = localStorage.getItem("theme") as Theme | null;
     if (storedTheme) {
       setTheme(storedTheme);
       applyTheme(storedTheme);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-      applyTheme("dark");
+    } else {
+      setTheme("light");
+      applyTheme("light");
     }
   }, []);
 

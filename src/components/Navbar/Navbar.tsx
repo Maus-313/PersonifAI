@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import { LoginModal } from "../Modal";
-import { useTheme } from "../ThemeProvider";
+import { useTheme, useAuth } from "../ThemeProvider";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, login, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    logout();
     setIsUserMenuOpen(false);
     router.push("/");
   };
@@ -194,7 +194,7 @@ export default function Navbar() {
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={() => {
           setIsLoginModalOpen(false);
-          setIsLoggedIn(true);
+          login();
         }}
       />
     </>

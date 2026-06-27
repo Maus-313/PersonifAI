@@ -1,9 +1,24 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import dns from "dns";
+
+dns.setDefaultResultOrder("ipv4first");
+
+// Individual Course File URIs
+const CSE1008_THEORY_OF_COMPUTATION_URI = "https://generativelanguage.googleapis.com/v1beta/files/g4y8noyzv2ji";
+const CSE3008_ML_COMBINED_STUDY_GUIDE_URI = "https://generativelanguage.googleapis.com/v1beta/files/lgudu6q4om2u";
+const ECE2002_COA_COMBINED_STUDY_GUIDE_URI = "https://generativelanguage.googleapis.com/v1beta/files/l2phoysy4bgw";
+const ENG1002_EFFECTIVE_ENGLISH_URI = "https://generativelanguage.googleapis.com/v1beta/files/s6k81cykfy87";
+
+// Course URIs Mapping
+const COURSE_URIS: Record<string, string> = {
+  "CSE1008_THEORY_OF_COMPUTATION": CSE1008_THEORY_OF_COMPUTATION_URI,
+  "CSE3008_ML_COMBINED_STUDY_GUIDE": CSE3008_ML_COMBINED_STUDY_GUIDE_URI,
+  "ECE2002_COA_COMBINED_STUDY_GUIDE": ECE2002_COA_COMBINED_STUDY_GUIDE_URI,
+  "ENG1002_EFFECTIVE_ENGLISH": ENG1002_EFFECTIVE_ENGLISH_URI,
+};
 
 export async function POST(req: Request) {
-  const HARDCODED_FILE_URI = "https://generativelanguage.googleapis.com/v1beta/files/3z96vlgx6ijp";
-  
   let message = "";
   try {
     const body = await req.json();
@@ -54,12 +69,26 @@ Keep your conversational text brief and encouraging.`;
       ? `${context}\nUser: ${message}\nAssistant:` 
       : `User: ${message}\nAssistant:`;
 
-    // Construct request array containing system prompt, file definition, and conversational history/message
+    // Detect which course the user is interacting with based on keywords in the message or chat history
+    let selectedFileUri = ENG1002_EFFECTIVE_ENGLISH_URI; // Default fallback
+    const contextUpper = `${context} ${message}`.toUpperCase();
+
+    if (contextUpper.includes("CSE1008") || contextUpper.includes("THEORY OF COMPUTATION") || contextUpper.includes("TOC")) {
+      selectedFileUri = CSE1008_THEORY_OF_COMPUTATION_URI;
+    } else if (contextUpper.includes("CSE3008") || contextUpper.includes("MACHINE LEARNING") || contextUpper.includes("ML")) {
+      selectedFileUri = CSE3008_ML_COMBINED_STUDY_GUIDE_URI;
+    } else if (contextUpper.includes("ECE2002") || contextUpper.includes("COA") || contextUpper.includes("COMPUTER ORGANIZATION")) {
+      selectedFileUri = ECE2002_COA_COMBINED_STUDY_GUIDE_URI;
+    } else if (contextUpper.includes("ENG1002") || contextUpper.includes("ENGLISH")) {
+      selectedFileUri = ENG1002_EFFECTIVE_ENGLISH_URI;
+    }
+
+    // Construct request array containing system prompt, selected file, and conversation context
     const contents = [
       systemPrompt,
       {
         fileData: {
-          fileUri: HARDCODED_FILE_URI,
+          fileUri: selectedFileUri,
           mimeType: "application/pdf",
         },
       },
@@ -76,7 +105,7 @@ Keep your conversational text brief and encouraging.`;
 
     return NextResponse.json({ content: text });
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    console.error("Gemini API Error:", error, "\nCause:", error?.cause || error?.message);
     return NextResponse.json(
       { error: "Failed to fetch response from AI: " + error.message },
       { status: 500 }

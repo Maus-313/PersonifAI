@@ -66,28 +66,37 @@ graph LR
 ```
 
 ### 2.2 Level 1: Internal Module Data Flow
-The Level 1 DFD breaks down the system into its core functional modules.
+The Level 1 DFD breaks down the system into its core functional modules, showcasing the dynamic retrieval of course material via Gemini's File API.
 
 ```mermaid
 graph TD
     User((User))
+    Admin((Admin/Educator))
     
     subgraph "PersonifAI System"
         P1[1.0 Chat & Interaction]
         P2[2.0 AI Processing]
         P3[3.0 Task Management]
         P4[4.0 Dashboard & Reporting]
+        P5[5.0 Course Upload Script]
     end
 
     Gemini(("Google Gemini AI"))
+    GF[(Gemini File API Store)]
     D1[("Tasks & SubSteps Store")]
+    C1[(Local Course PDFs)]
 
     User -->|User Query| P1
     P1 -->|Clarification / Preview| User
     
     P1 -->|Refined Request| P2
-    P2 <-->|API Call / JSON| Gemini
+    P2 <-->|API Call with PDF fileUri| Gemini
     P2 -->|Structured Task Data| P1
+    
+    Admin -->|Run upload-file.mjs| P5
+    P5 -->|Read PDF Syllabi| C1
+    P5 -->|Upload & Map URIs| GF
+    P2 -.->|Reference File URIs| GF
 
     P1 -->|Approved Task| P3
     P3 -->|Store Task| D1
@@ -102,6 +111,7 @@ graph TD
     style P2 fill:#bbf,stroke:#333,color:#000
     style P3 fill:#bbf,stroke:#333,color:#000
     style P4 fill:#bbf,stroke:#333,color:#000
+    style P5 fill:#bbf,stroke:#333,color:#000
     style D1 fill:#bfb,stroke:#333,color:#000
 ```
 
@@ -156,12 +166,14 @@ The logic tier handles request routing, business logic, and external API orchest
 - **API Framework:** Next.js Route Handlers (Server-side).
 - **AI Integration:** 
     - Integration with **Google Gemini AI** (`gemini-2.5-flash`).
-    - Specialized system prompting to convert natural language into structured JSON task previews.
-- **ORM:** **Prisma 7** manages the abstraction layer for database operations, ensuring schema consistency.
+    - **Context-Grounded Learning (Gemini File API):** Local course PDF study guides (`/Cources`) are uploaded to the Gemini File API using the helper script `upload-file.mjs`. When a user requests help with a task, the API route handler (`src/app/api/chat/route.ts`) maps the message context to the corresponding uploaded PDF URI and attaches it to the generation request.
+    - Specialized system prompting to convert natural language and file context into structured JSON task previews with robust YouTube video URL extractors.
+- **ORM:** **Prisma 7** manages the database abstraction, using driver adapters for serverless database compatibility.
 
 ### 4.3 Data Tier (Database)
 Persistent storage for all user data and generated tasks.
-- **Database:** **PostgreSQL**.
+- **Database:** **PostgreSQL (Neon Serverless)**.
+- **Database Connection:** Leverages `@prisma/adapter-pg` with a serverless `pg` Connection Pool for high-performance query execution and reliable connection pooling.
 - **Data Model:**
-    - **Task:** Represents a broad goal (e.g., "Learn React"). Includes a flexible `juice` JSON field for metadata (subject, priority).
-    - **SubStep:** Actionable items linked to a task (text instructions, video URLs, or revision notes).
+    - **Task:** Represents a broad learning goal. Includes a flexible `juice` JSON field for metadata (subject, priority).
+    - **SubStep:** Actionable items linked to a task (text instructions, video URLs, or revision notes) supporting custom step categories: `TEXT`, `VIDEO`, `PHYSICAL`, and `REVISION`.

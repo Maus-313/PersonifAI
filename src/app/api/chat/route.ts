@@ -63,6 +63,8 @@ When providing a breakdown, you MUST include a JSON block at the end of your res
   ]
 }
 
+For "VIDEO" type subSteps, the "content" field MUST contain one or more valid YouTube URLs (e.g., https://www.youtube.com/watch?v=...) relevant to the sub-step topic, optionally preceded by a brief description. Do not put plain text without a URL in the "content" field of a VIDEO step.
+
 Keep your conversational text brief and encouraging.`;
 
     const conversationPrompt = context 
